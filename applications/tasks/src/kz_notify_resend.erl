@@ -92,32 +92,14 @@
 %% @doc Starts the server.
 %% @end
 %%------------------------------------------------------------------------------
-%-spec wait_until(fun(), any(), pos_integer(), pos_integer()) -> any().
-%wait_until(Fun, Expected, RetryEveryMs, MaxRetries) ->
-%    wait_until(Fun, Expected, RetryEveryMs, MaxRetries, 1).
-%
-%wait_until(Fun, Expected, RetryEveryMs, MaxRetries, Counter) when Counter =< MaxRetries ->
-%    case Fun() of
-%        Expected -> Expected;
-%        _Any -> wait_until(Fun, Expected, RetryEveryMs, MaxRetries, Counter + 1)
-%    end;
-%wait_until(_Fun, _Expected, _RetryEveryMs, MaxRetries, Counter) when Counter > MaxRetries ->
-%    throw(timeout).
-
 -spec start_link() -> kz_types:startlink_ret().
 start_link() ->
-    lager:warning("Trying to start kz_notify_resend worker"),
     case gen_server:start_link(?SERVER, ?MODULE, [], []) of
         {'error', {'already_started', Pid}}
-          when is_pid(Pid)->
-            lager:warning("kz_notify_resend worker already started at pid ~p, linking...", [Pid]),
+          when is_pid(Pid) ->
             erlang:link(Pid),
-            timer:sleep(1000),
-            %wait_until(fun() -> do_something_here end, true, 100, 20),
-            lager:warning("kz_notify_resend existing worker linked correctly"),
             {'ok', Pid};
         Other ->
-            lager:warning("kz_notify_resend worker start_link response: ~p", [Other]),
             Other
     end.
 
@@ -132,7 +114,7 @@ start_link() ->
 -spec init([]) -> {'ok', state(), timeout()}.
 init([]) ->
     kz_util:put_callid(?NAME),
-    lager:warning("~s has been started", [?NAME]),
+    lager:debug("~s has been started", [?NAME]),
     {'ok', #state{}, ?TIME_BETWEEN_CYCLE}.
 
 -spec stop() -> ok.
@@ -180,7 +162,7 @@ handle_cast(stop, State) ->
     lager:debug("notify resender has been stopped"),
     {stop, normal, State};
 handle_cast({'$proxy_stop', Reason}, State) ->
-    lager:debug("notify resender has been stopped with reason: ~p", [Reason]),
+    lager:debug("~p stopping with reason: ~p", [?MODULE, Reason]),
     {stop, Reason, State};
 handle_cast(_Msg, State) ->
     lager:debug("unhandled cast: ~p", [_Msg]),

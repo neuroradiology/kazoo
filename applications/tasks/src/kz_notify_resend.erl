@@ -157,13 +157,13 @@ handle_call(_Request, _From, State) ->
 %%------------------------------------------------------------------------------
 -spec handle_cast(any(), state()) -> kz_types:handle_cast_ret_state(state()).
 handle_cast('next_cycle', State) ->
-    {'noreply', State#state{running=[]}, ?TIME_BETWEEN_CYCLE};
-handle_cast(stop, State) ->
+    {'noreply', State#state{'running'=[]}, ?TIME_BETWEEN_CYCLE};
+handle_cast('stop', State) ->
     lager:debug("notify resender has been stopped"),
-    {stop, normal, State};
+    {'stop', 'normal', State};
 handle_cast({'$proxy_stop', Reason}, State) ->
     lager:debug("~p stopping with reason: ~p", [?MODULE, Reason]),
-    {stop, Reason, State};
+    {'stop', Reason, State};
 handle_cast(_Msg, State) ->
     lager:debug("unhandled cast: ~p", [_Msg]),
     {'noreply', State}.
